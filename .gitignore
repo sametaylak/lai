@@ -1,0 +1,6 @@
+# Build generation
+build/
+Makefile
+
+# Include bin for this project
+!bin/
