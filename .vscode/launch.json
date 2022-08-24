@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Debug",
+      "type": "cppdbg",
+      "request": "launch",
+      "stopAtEntry": false,
+      "osx": {
+        "program": "${workspaceFolder}/build/bin/Debug-macosx-x86_64/sandbox/sandbox",
+        "MIMode": "lldb",
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch Release",
+      "type": "cppdbg",
+      "request": "launch",
+      "osx": {
+        "program": "${workspaceFolder}/build/bin/Release-macosx-x86_64/sandbox/sandbox",
+        "MIMode": "lldb",
+      },
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

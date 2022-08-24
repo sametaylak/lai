@@ -4,3 +4,6 @@ Makefile
 
 # Include bin for this project
 !bin/
+
+# Include .vscode
+!.vscode/

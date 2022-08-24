@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "(MacOSX) Build Debug",
+      "type": "shell",
+      "group": "build",
+      "problemMatcher": "$gcc",
+      "osx": {
+        "command": "${workspaceFolder}/bin/build_macosx_debug.sh"
+      }
+    },
+    {
+      "label": "(MacOSX) Build Release",
+      "type": "shell",
+      "group": "build",
+      "problemMatcher": "$gcc",
+      "osx": {
+        "command": "${workspaceFolder}/bin/build_macosx_release.sh"
+      }
+    }
+  ]
+}
