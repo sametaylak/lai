@@ -1,7 +1,7 @@
 project "core"
 	kind "SharedLib"
-	language "C"
-	cdialect "C11"
+	language "C++"
+	cppdialect "C++17"
 	staticruntime "off"
 
 	targetdir ("%{wks.location}/build/bin/" .. outputdir .. "/%{prj.name}")
@@ -10,7 +10,7 @@ project "core"
 	files
 	{
 		"src/**.h",
-		"src/**.c"
+		"src/**.cpp"
 	}
 
 	includedirs
