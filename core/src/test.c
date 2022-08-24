@@ -2,7 +2,4 @@
 
 #include <stdio.h>
 
-void print_int(i32 i) {
-  printf("The number is: %i", i);
-  printf("The number2 is: %i", i);
-}
+void print_int(i32 i) { printf("The number is: %i", i); }
