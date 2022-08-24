@@ -1,0 +1,4 @@
+# LAI
+
+## Requirements
+- clang-format
