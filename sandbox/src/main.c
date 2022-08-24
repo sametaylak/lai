@@ -1,6 +1,1 @@
-#include <test.h>
-
-int main(void) {
-  print_int(32);
-  return 0;
-}
+int main(void) { return 0; }
