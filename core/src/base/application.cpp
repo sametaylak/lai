@@ -1,4 +1,5 @@
 #include "base/application.h"
+#include "base/lai_memory.h"
 #include "base/log.h"
 #include "game_types.h"
 #include "platform/platform.h"
@@ -62,6 +63,8 @@ bool application_create(game *game_inst) {
 }
 
 bool application_run() {
+  LAI_LOG_INFO(get_memory_usage());
+
   while (app_state.is_running) {
     if (!platform_pump_messages(&app_state.platform)) {
       app_state.is_running = false;
