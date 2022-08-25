@@ -344,41 +344,41 @@ void* platform_zero_memory(void *block, u64 size) {
     return memset(block, 0, size);
 }
 
-void* platform_copy_memory(void *dest, const void *source, u64 size) {
-    return memcpy(dest, source, size);
+void* platform_copy_memory(void *destination, const void *source, u64 size) {
+    return memcpy(destination, source, size);
 }
 
-void* platform_set_memory(void *dest, i32 value, u64 size) {
-    return memset(dest, value, size);
+void* platform_set_memory(void *destination, i32 value, u64 size) {
+    return memset(destination, value, size);
 }
 
-void platform_console_write(const char *message, u8 colour) {
+void platform_console_write(const char *message, u8 color) {
     // FATAL,ERROR,WARN,INFO,DEBUG,TRACE
-    const char* colour_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
-    printf("\033[%sm%s\033[0m\n", colour_strings[colour], message);
+    const char* color_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
+    printf("\033[%sm%s\033[0m\n", color_strings[color], message);
 }
 
-void platform_console_write_error(const char *message, u8 colour) {
+void platform_console_write_error(const char *message, u8 color) {
     // FATAL,ERROR,WARN,INFO,DEBUG,TRACE
-    const char* colour_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
-    printf("\033[%sm%s\033[0m\n", colour_strings[colour], message);
+    const char* color_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
+    printf("\033[%sm%s\033[0m\n", color_strings[color], message);
 }
 
 f64 platform_get_absolute_time() {
     return mach_absolute_time();
 }
 
-void platform_sleep(u64 ms) {
+void platform_sleep(u64 milliseconds) {
 #if _POSIX_C_SOURCE >= 199309L
     struct timespec ts;
-    ts.tv_sec = ms / 1000;
-    ts.tv_nsec = (ms % 1000) * 1000 * 1000;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000 * 1000;
     nanosleep(&ts, 0);
 #else
-    if (ms >= 1000) {
-        sleep(ms / 1000);
+    if (milliseconds >= 1000) {
+        sleep(milliseconds / 1000);
     }
-    usleep((ms % 1000) * 1000);
+    usleep((milliseconds % 1000) * 1000);
 #endif
 }
 
