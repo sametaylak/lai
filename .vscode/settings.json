@@ -1,0 +1,15 @@
+{
+  "files.associations": {
+    "__hash_table": "cpp",
+    "__tuple": "cpp",
+    "array": "cpp",
+    "chrono": "cpp",
+    "compare": "cpp",
+    "cstddef": "cpp",
+    "type_traits": "cpp",
+    "limits": "cpp",
+    "ratio": "cpp",
+    "tuple": "cpp",
+    "variant": "cpp"
+  }
+}

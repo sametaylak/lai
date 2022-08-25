@@ -1,4 +1,5 @@
 #include "base/application.h"
+#include "base/event.h"
 #include "base/lai_memory.h"
 #include "base/log.h"
 #include "game_types.h"
@@ -40,6 +41,11 @@ bool application_create(game *game_inst) {
 
   app_state.is_running = true;
   app_state.is_suspended = false;
+
+  if (!event_initialize()) {
+    LAI_LOG_FATAL("Event system failed to initialize!");
+    return false;
+  }
 
   if (!platform_startup(&app_state.platform, game_inst->app_config.name,
                         game_inst->app_config.start_pos_x,
@@ -86,6 +92,8 @@ bool application_run() {
   }
 
   app_state.is_running = false;
+
+  event_shutdown();
 
   platform_shutdown(&app_state.platform);
 
