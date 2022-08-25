@@ -56,7 +56,8 @@ struct internal_state {
     // event_context data = {};
     // event_fire(EVENT_CODE_APPLICATION_QUIT, 0, data);
 
-    return YES;
+    // We close on platform shutdown
+    return FALSE;
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
@@ -290,7 +291,7 @@ bool platform_startup(platform_state* plat_state, const char* name, i32 x, i32 y
 
 void platform_shutdown(platform_state* plat_state) {
   internal_state *state = (internal_state *)plat_state->internal_state;
-  if (state) {
+  if (state != nullptr) {
     @autoreleasepool {
       [state->window orderOut:nil];
 

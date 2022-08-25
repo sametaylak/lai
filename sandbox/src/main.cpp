@@ -1,21 +1,21 @@
-#include <base/log.h>
+#include "game.h"
+
+#include <entry_point.h>
 #include <platform/platform.h>
 
-int main() {
-  LAI_LOG_FATAL("A test message: %f", 3.14f);
-  LAI_LOG_ERROR("A test message: %f", 3.14f);
-  LAI_LOG_WARN("A test message: %f", 3.14f);
-  LAI_LOG_INFO("A test message: %f", 3.14f);
-  LAI_LOG_DEBUG("A test message: %f", 3.14f);
-  LAI_LOG_TRACE("A test message: %f", 3.14f);
+bool create_game(game *out_game) {
+  out_game->app_config.start_pos_x = 0;
+  out_game->app_config.start_pos_y = 0;
+  out_game->app_config.start_width = 800;
+  out_game->app_config.start_height = 600;
+  out_game->app_config.name = "LAI";
 
-  platform_state state;
-  if (platform_startup(&state, "LAI", 0, 0, 800, 600)) {
-    while (true) {
-      platform_pump_messages(&state);
-    }
-  }
-  platform_shutdown(&state);
+  out_game->update = game_update;
+  out_game->render = game_render;
+  out_game->initialize = game_initialize;
+  out_game->on_resize = game_on_resize;
 
-  return 0;
+  out_game->state = platform_allocate(sizeof(game_state), false);
+
+  return true;
 }
