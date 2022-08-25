@@ -1,4 +1,6 @@
 #include "base/application.h"
+#include "base/event.h"
+#include "base/lai_memory.h"
 #include "base/log.h"
 #include "game_types.h"
 #include "platform/platform.h"
@@ -40,6 +42,11 @@ bool application_create(game *game_inst) {
   app_state.is_running = true;
   app_state.is_suspended = false;
 
+  if (!event_initialize()) {
+    LAI_LOG_FATAL("Event system failed to initialize!");
+    return false;
+  }
+
   if (!platform_startup(&app_state.platform, game_inst->app_config.name,
                         game_inst->app_config.start_pos_x,
                         game_inst->app_config.start_pos_y,
@@ -62,6 +69,8 @@ bool application_create(game *game_inst) {
 }
 
 bool application_run() {
+  LAI_LOG_INFO(get_memory_usage());
+
   while (app_state.is_running) {
     if (!platform_pump_messages(&app_state.platform)) {
       app_state.is_running = false;
@@ -83,6 +92,8 @@ bool application_run() {
   }
 
   app_state.is_running = false;
+
+  event_shutdown();
 
   platform_shutdown(&app_state.platform);
 
