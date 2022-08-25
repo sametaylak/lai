@@ -10,7 +10,8 @@ project "core"
 	files
 	{
 		"src/**.h",
-		"src/**.cpp"
+		"src/**.cpp",
+		"src/**.mm",
 	}
 
 	includedirs
@@ -18,8 +19,14 @@ project "core"
 		"src",
 	}
 
-	filter "system:windows"
-		systemversion "latest"
+	filter "system:macosx"
+		defines "LAI_PLATFORM_MACOSX"
+		links
+		{
+			"Cocoa.framework",
+			"Foundation.framework",
+			"QuartzCore.framework"
+		}
 
 	filter "configurations:Debug"
 		defines "LAI_DEBUG"
