@@ -1,9 +1,9 @@
 #include "base/lai_memory.h"
+#include "base/lai_string.h"
 #include "base/log.h"
 #include "platform/platform.h"
 
 #include <stdio.h>
-#include <string.h>
 
 struct memory_stats {
   u64 total_allocated;
@@ -67,7 +67,7 @@ char *get_memory_usage() {
   const u64 kib = 1024;
 
   char buffer[8000] = "System memory use (tagged):\n";
-  u64 offset = strlen(buffer);
+  u64 offset = string_length(buffer);
   for (u32 i = 0; i < MEMORY_TAG_MAX_TAGS; ++i) {
     char unit[4] = "XiB";
     float amount = 1.0f;
@@ -91,6 +91,6 @@ char *get_memory_usage() {
                           memory_tag_strings[i], amount, unit);
     offset += length;
   }
-  char *out_string = strdup(buffer);
+  char *out_string = string_duplicate(buffer);
   return out_string;
 }

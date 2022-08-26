@@ -44,14 +44,13 @@ void event_shutdown() {
 }
 
 bool event_register(u16 code, void *listener, PFN_on_event on_event) {
-  if (initialized) {
+  if (!initialized) {
     LAI_LOG_WARN("Waiting for event system initialization");
     return false;
   }
 
   if (state.registered[code].events == nullptr) {
-    state.registered[code].events =
-        (registered_event *)darray_create(registered_event);
+    state.registered[code].events = darray_create(registered_event);
   }
 
   u64 registered_count = darray_length(state.registered[code].events);
@@ -65,15 +64,13 @@ bool event_register(u16 code, void *listener, PFN_on_event on_event) {
   event.listener = listener;
   event.callback = on_event;
 
-  void *event_void = (void *)&event;
-  void *events_void = (void *)&state.registered[code].events;
-  darray_push(events_void, event_void);
+  darray_push(state.registered[code].events, event);
 
   return true;
 }
 
 bool event_unregister(u16 code, void *listener, PFN_on_event on_event) {
-  if (initialized) {
+  if (!initialized) {
     LAI_LOG_WARN("Waiting for event system initialization");
     return false;
   }
@@ -97,7 +94,7 @@ bool event_unregister(u16 code, void *listener, PFN_on_event on_event) {
 }
 
 bool event_fire(u16 code, void *sender, event_context context) {
-  if (initialized) {
+  if (!initialized) {
     LAI_LOG_WARN("Waiting for event system initialization");
     return false;
   }
