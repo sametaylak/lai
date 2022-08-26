@@ -1,5 +1,6 @@
 #include "base/application.h"
 #include "base/event.h"
+#include "base/input.h"
 #include "base/lai_memory.h"
 #include "base/log.h"
 #include "game_types.h"
@@ -20,6 +21,11 @@ struct application_state {
 static bool initialized = false;
 static application_state app_state;
 
+bool application_on_event(u16 code, void *sender, void *listener,
+                          event_context context);
+bool application_on_key(u16 code, void *sender, void *listener,
+                        event_context context);
+
 bool application_create(game *game_inst) {
   if (initialized) {
     LAI_LOG_ERROR("application_create called more than once");
@@ -30,6 +36,7 @@ bool application_create(game *game_inst) {
 
   // Initialize subsystem
   initialize_logging();
+  input_initialize();
 
   // TODO: remove
   LAI_LOG_FATAL("A test message: %f", 3.14f);
@@ -46,6 +53,10 @@ bool application_create(game *game_inst) {
     LAI_LOG_FATAL("Event system failed to initialize!");
     return false;
   }
+
+  event_register(EVENT_CODE_APPLICATION_QUIT, 0, application_on_event);
+  event_register(EVENT_CODE_KEY_PRESSED, 0, application_on_key);
+  event_register(EVENT_CODE_KEY_RELEASED, 0, application_on_key);
 
   if (!platform_startup(&app_state.platform, game_inst->app_config.name,
                         game_inst->app_config.start_pos_x,
@@ -88,14 +99,51 @@ bool application_run() {
         app_state.is_running = true;
         break;
       }
+
+      input_update(0);
     }
   }
 
   app_state.is_running = false;
 
+  event_unregister(EVENT_CODE_APPLICATION_QUIT, 0, application_on_event);
+  event_unregister(EVENT_CODE_KEY_PRESSED, 0, application_on_key);
+  event_unregister(EVENT_CODE_KEY_RELEASED, 0, application_on_key);
+
   event_shutdown();
+  input_shutdown();
 
   platform_shutdown(&app_state.platform);
 
   return true;
+}
+
+bool application_on_event(u16 code, void *sender, void *listener,
+                          event_context context) {
+  switch (code) {
+  case EVENT_CODE_APPLICATION_QUIT: {
+    LAI_LOG_INFO("EVENT_CODE_APPLICATION_QUIT received, shutting down");
+    app_state.is_running = false;
+    return true;
+  }
+  }
+  return false;
+}
+
+bool application_on_key(u16 code, void *sender, void *listener,
+                        event_context context) {
+  if (code == EVENT_CODE_KEY_PRESSED) {
+    u16 key_code = context.data.u16[0];
+    if (key_code == KEY_ESCAPE) {
+      event_context data;
+      event_fire(EVENT_CODE_APPLICATION_QUIT, 0, data);
+      return true;
+    } else {
+      LAI_LOG_DEBUG("'%c' key pressed", key_code);
+    }
+  } else if (code == EVENT_CODE_KEY_RELEASED) {
+    u16 key_code = context.data.u16[0];
+    LAI_LOG_DEBUG("'%c' key released", key_code);
+  }
+  return false;
 }
