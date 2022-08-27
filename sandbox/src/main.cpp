@@ -6,8 +6,8 @@
 bool create_game(game *out_game) {
   out_game->app_config.start_pos_x = 0;
   out_game->app_config.start_pos_y = 0;
-  out_game->app_config.start_width = 800;
-  out_game->app_config.start_height = 600;
+  out_game->app_config.start_width = 1600;
+  out_game->app_config.start_height = 900;
   out_game->app_config.name = "LAI";
 
   out_game->update = game_update;

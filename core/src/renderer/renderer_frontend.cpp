@@ -26,6 +26,14 @@ void renderer_shutdown() {
   lai_free(backend, sizeof(renderer_backend), MEMORY_TAG_RENDERER);
 }
 
+void renderer_on_resized(u16 width, u16 height) {
+  if (backend) {
+    backend->resized(backend, width, height);
+  } else {
+    LAI_LOG_WARN("Renderer backend does not exist to accept resize");
+  }
+}
+
 bool renderer_begin_frame(f32 delta_time) {
   return backend->begin_frame(backend, delta_time);
 }

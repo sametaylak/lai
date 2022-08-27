@@ -73,17 +73,30 @@ keys translate_keycode(u32 ns_keycode);
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
-    // TODO: handle resize
+    event_context context;
+    const NSRect contentRect = [state->view frame];
+    const NSRect framebufferRect = [state->view convertRectToBacking:contentRect];
+    context.data.u16[0] = (u16)framebufferRect.size.width;
+    context.data.u16[1] = (u16)framebufferRect.size.height;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
 }
 
 - (void)windowDidMiniaturize:(NSNotification *)notification {
-    // TODO: handle minimize
+    event_context context;
+    context.data.u16[0] = 0;
+    context.data.u16[1] = 0;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
 
     [state->window miniaturize:nil];
 }
 
 - (void)windowDidDeminiaturize:(NSNotification *)notification {
-    // TODO: handle de-minimize
+    event_context context;
+    const NSRect contentRect = [state->view frame];
+    const NSRect framebufferRect = [state->view convertRectToBacking:contentRect];
+    context.data.u16[0] = (u16)framebufferRect.size.width;
+    context.data.u16[1] = (u16)framebufferRect.size.height;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
 
     [state->window deminiaturize:nil];
 }
@@ -290,6 +303,15 @@ bool platform_startup(platform_state* plat_state, const char* name, i32 x, i32 y
     [state->window setDelegate:state->window_delegate];
     [state->window setAcceptsMouseMovedEvents:YES];
     [state->window setRestorable:NO];
+
+    // send first resize event
+    event_context context;
+    const NSRect contentRect = [state->view frame];
+    const NSRect framebufferRect = [state->view convertRectToBacking:contentRect];
+    LAI_LOG_INFO("%i", (u16)framebufferRect.size.width);
+    context.data.u16[0] = (u16)framebufferRect.size.width;
+    context.data.u16[1] = (u16)framebufferRect.size.height;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
 
     if (![[NSRunningApplication currentApplication] isFinishedLaunching])
         [NSApp run];

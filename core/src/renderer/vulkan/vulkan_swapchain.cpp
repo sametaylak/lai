@@ -221,8 +221,9 @@ void create(vulkan_context *context, u32 width, u32 height,
 }
 
 void destroy(vulkan_context *context, vulkan_swapchain *swapchain) {
-  LAI_LOG_INFO("Destroying swapchain...");
+  vkDeviceWaitIdle(context->device.logical_device);
 
+  LAI_LOG_INFO("Destroying swapchain...");
   vulkan_image_destroy(context, &swapchain->depth_attachment);
 
   for (u32 i = 0; i < swapchain->image_count; ++i) {
