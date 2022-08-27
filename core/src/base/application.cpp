@@ -154,6 +154,11 @@ bool application_run() {
   return true;
 }
 
+void application_get_framebuffer_size(u32 *width, u32 *height) {
+  *width = app_state.width;
+  *height = app_state.height;
+}
+
 bool application_on_event(u16 code, void *sender, void *listener,
                           event_context context) {
   switch (code) {
