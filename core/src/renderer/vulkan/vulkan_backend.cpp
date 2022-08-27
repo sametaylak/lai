@@ -54,7 +54,6 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
   create_info.ppEnabledExtensionNames = required_extensions;
 
   const char **required_validation_layers = darray_create(const char *);
-  ;
 
 #ifdef LAI_DEBUG
   LAI_LOG_DEBUG("Validation layers enabled!");
