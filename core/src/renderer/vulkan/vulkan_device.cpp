@@ -116,6 +116,10 @@ bool vulkan_device_create(vulkan_context *context) {
 }
 
 void vulkan_device_destroy(vulkan_context *context) {
+  context->device.graphics_queue = nullptr;
+  context->device.present_queue = nullptr;
+  context->device.transfer_queue = nullptr;
+
   LAI_LOG_INFO("Destroying logical device resources...");
   if (context->device.logical_device) {
     vkDestroyDevice(context->device.logical_device, context->allocator);
