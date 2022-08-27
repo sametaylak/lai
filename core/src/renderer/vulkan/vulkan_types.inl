@@ -44,6 +44,26 @@ struct vulkan_image {
   u32 height;
 };
 
+enum vulkan_renderpass_state {
+  READY,
+  RECORDING,
+  IN_RENDERPASS,
+  RECORDING_ENDED,
+  SUBMITTED,
+  NOT_ALLOCATED
+};
+
+struct vulkan_renderpass {
+  VkRenderPass handle;
+  f32 x, y, w, h;
+  f32 r, g, b, a;
+
+  f32 depth;
+  u32 stencil;
+
+  vulkan_renderpass_state state;
+};
+
 struct vulkan_swapchain {
   VkSurfaceFormatKHR image_format;
   u8 max_frames_in_flight;
@@ -53,6 +73,21 @@ struct vulkan_swapchain {
   VkImageView *views;
 
   vulkan_image depth_attachment;
+};
+
+enum vulkan_command_buffer_state {
+  COMMAND_BUFFER_STATE_READY,
+  COMMAND_BUFFER_STATE_RECORDING,
+  COMMAND_BUFFER_STATE_IN_RENDERPASS,
+  COMMAND_BUFFER_STATE_RECORDING_ENDED,
+  COMMAND_BUFFER_STATE_SUBMITTED,
+  COMMAND_BUFFER_STATE_NOT_ALLOCATED
+};
+
+struct vulkan_command_buffer {
+  VkCommandBuffer handle;
+
+  vulkan_command_buffer_state state;
 };
 
 struct vulkan_context {
@@ -69,6 +104,8 @@ struct vulkan_context {
   vulkan_device device;
 
   vulkan_swapchain swapchain;
+  vulkan_renderpass main_renderpass;
+
   u32 image_index;
   u32 current_frame;
 

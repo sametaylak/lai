@@ -1,6 +1,7 @@
 #include "renderer/vulkan/vulkan_backend.h"
 #include "renderer/vulkan/vulkan_device.h"
 #include "renderer/vulkan/vulkan_platform.h"
+#include "renderer/vulkan/vulkan_renderpass.h"
 #include "renderer/vulkan/vulkan_swapchain.h"
 #include "renderer/vulkan/vulkan_types.inl"
 
@@ -139,10 +140,18 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
   vulkan_swapchain_create(&context, context.framebuffer_width,
                           context.framebuffer_height, &context.swapchain);
 
+  vulkan_renderpass_create(
+      &context, &context.main_renderpass, 0, 0, context.framebuffer_width,
+      context.framebuffer_height, 0.0f, 0.0f, 0.2f, 1.0f, 1.0f, 0);
+
+  LAI_LOG_INFO("Vulkan renderer created!");
+
   return true;
 }
 
 void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
+  vulkan_renderpass_destroy(&context, &context.main_renderpass);
+
   vulkan_swapchain_destroy(&context, &context.swapchain);
 
   vulkan_device_destroy(&context);
