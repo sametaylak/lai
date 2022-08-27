@@ -2,7 +2,7 @@
 
 #include "defines.h"
 
-union vec2_u {
+typedef union vec2_u {
   f32 elements[2];
 
   struct {
@@ -13,9 +13,9 @@ union vec2_u {
       f32 y, g, t, v;
     };
   };
-} vec2
+} vec2;
 
-    union vec3_u {
+typedef union vec3_u {
   f32 elements[3];
 
   struct {
@@ -31,7 +31,7 @@ union vec2_u {
   };
 } vec3;
 
-union vec4_u {
+typedef union vec4_u {
 #ifdef LAI_USE_SIMD
   // used for SIMD operationgs;
   alignas(16) __m128 data;
@@ -55,3 +55,11 @@ union vec4_u {
 } vec4;
 
 typedef vec4 quat;
+
+typedef union mat4_u {
+  alignas(16) f32 data[16];
+#ifdef LAI_USE_SIMD
+  // used for SIMD operations;
+  alignas(16) f32 rows[16];
+#endif
+} mat4;
