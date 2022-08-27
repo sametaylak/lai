@@ -2,6 +2,10 @@
 build/
 Makefile
 
+# xcode
+*.pbxproj
+*.xcworkspacedata
+
 # Include bin for this project
 !bin/
 
