@@ -17,15 +17,22 @@ project "core"
 	includedirs
 	{
 		"src",
+		"%{IncludeDir.VulkanSDK}",
 	}
 
 	filter "system:macosx"
 		defines "LAI_PLATFORM_MACOSX"
+		libdirs
+		{
+			"%{LibraryDir.VulkanSDK}",
+		}
+
 		links
 		{
 			"Cocoa.framework",
 			"Foundation.framework",
-			"QuartzCore.framework"
+			"QuartzCore.framework",
+			"%{Library.Vulkan_MacOSX}",
 		}
 
 	filter "configurations:Debug"

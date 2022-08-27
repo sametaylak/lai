@@ -22,7 +22,8 @@ enum { DARRAY_CAPACITY, DARRAY_LENGTH, DARRAY_STRIDE, DARRAY_FIELD_LENGTH };
 #define darray_create(type)                                                    \
   _darray_create<type>(DARRAY_DEFAULT_CAPACITY, sizeof(type))
 
-#define darray_reserve(type, capacity) _darray_create(capacity, sizeof(type))
+#define darray_reserve(type, capacity)                                         \
+  _darray_create<type>(capacity, sizeof(type))
 
 #define darray_destroy(array) _darray_destroy(array)
 
@@ -53,7 +54,7 @@ template <typename T> T *_darray_create(u64 length, u64 stride) {
   u64 header_size = DARRAY_FIELD_LENGTH * sizeof(u64);
   u64 array_size = length * stride;
   u64 *new_array =
-      (u64 *)lai_allocate(header_size + array_size, MEMORY_TAG_ARRAY);
+      (u64 *)lai_allocate(header_size + array_size, MEMORY_TAG_DARRAY);
   lai_set_memory(new_array, 0, header_size + array_size);
   new_array[DARRAY_CAPACITY] = length;
   new_array[DARRAY_LENGTH] = 0;

@@ -1,6 +1,8 @@
 // clang-format Language: Cpp
 
 #include "platform/platform.h"
+#include "renderer/vulkan/vulkan_platform.h"
+#include "containers/darray.h"
 #include "base/log.h"
 #include "base/input.h"
 
@@ -388,6 +390,12 @@ void platform_sleep(u64 milliseconds) {
     }
     usleep((milliseconds % 1000) * 1000);
 #endif
+}
+
+void platform_get_required_extension_names(const char ***names_darray) {
+  darray_push(*names_darray, "VK_EXT_metal_surface");
+  darray_push(*names_darray, "VK_KHR_get_physical_device_properties2");
+  darray_push(*names_darray, "VK_KHR_portability_enumeration");
 }
 
 keys translate_keycode(u32 ns_keycode) { 

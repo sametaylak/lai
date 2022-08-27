@@ -11,3 +11,7 @@ char *string_duplicate(const char *str) {
   lai_copy_memory(copy, str, length + 1);
   return copy;
 }
+
+bool strings_equal(const char *str0, const char *str1) {
+  return strcmp(str0, str1) == 0;
+}

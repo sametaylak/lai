@@ -7,6 +7,8 @@
 #include "game_types.h"
 #include "platform/platform.h"
 
+#include "renderer/renderer_frontend.h"
+
 #include <cstdlib>
 
 struct application_state {
@@ -40,14 +42,6 @@ bool application_create(game *game_inst) {
   initialize_logging();
   input_initialize();
 
-  // TODO: remove
-  LAI_LOG_FATAL("A test message: %f", 3.14f);
-  LAI_LOG_ERROR("A test message: %f", 3.14f);
-  LAI_LOG_WARN("A test message: %f", 3.14f);
-  LAI_LOG_INFO("A test message: %f", 3.14f);
-  LAI_LOG_DEBUG("A test message: %f", 3.14f);
-  LAI_LOG_TRACE("A test message: %f", 3.14f);
-
   app_state.is_running = true;
   app_state.is_suspended = false;
 
@@ -65,6 +59,11 @@ bool application_create(game *game_inst) {
                         game_inst->app_config.start_pos_y,
                         game_inst->app_config.start_width,
                         game_inst->app_config.start_height)) {
+    return false;
+  }
+
+  if (!renderer_initialize(game_inst->app_config.name, &app_state.platform)) {
+    LAI_LOG_FATAL("Failed to initialize renderer. Shutting down!");
     return false;
   }
 
@@ -115,6 +114,10 @@ bool application_run() {
         break;
       }
 
+      render_packet packet;
+      packet.delta_time = delta;
+      renderer_draw_frame(&packet);
+
       f64 frame_end_time = platform_get_absolute_time();
       f64 frame_elapsed_time = frame_end_time - frame_start_time;
       running_time += frame_elapsed_time;
@@ -144,6 +147,7 @@ bool application_run() {
 
   event_shutdown();
   input_shutdown();
+  renderer_shutdown();
 
   platform_shutdown(&app_state.platform);
 
