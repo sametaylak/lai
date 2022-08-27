@@ -1,6 +1,7 @@
 #include "renderer/vulkan/vulkan_backend.h"
 #include "renderer/vulkan/vulkan_device.h"
 #include "renderer/vulkan/vulkan_platform.h"
+#include "renderer/vulkan/vulkan_swapchain.h"
 #include "renderer/vulkan/vulkan_types.inl"
 
 #include "base/lai_string.h"
@@ -17,9 +18,12 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     VkDebugUtilsMessageTypeFlagsEXT message_types,
     const VkDebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data);
 
+i32 find_memory_index(u32 type_filter, u32 property_flags);
+
 bool vulkan_renderer_backend_initialize(renderer_backend *backend,
                                         const char *application_name,
                                         struct platform_state *plat_state) {
+  context.find_memory_index = find_memory_index;
   context.allocator = nullptr;
 
   VkApplicationInfo app_info = {};
@@ -132,10 +136,15 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
     return false;
   }
 
+  vulkan_swapchain_create(&context, context.framebuffer_width,
+                          context.framebuffer_height, &context.swapchain);
+
   return true;
 }
 
 void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
+  vulkan_swapchain_destroy(&context, &context.swapchain);
+
   vulkan_device_destroy(&context);
 
   LAI_LOG_DEBUG("Destroying vulkan surface");
@@ -190,4 +199,20 @@ vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
     break;
   }
   return VK_FALSE;
+}
+
+i32 find_memory_index(u32 type_filter, u32 property_flags) {
+  VkPhysicalDeviceMemoryProperties memory_properties;
+  vkGetPhysicalDeviceMemoryProperties(context.device.physical_device,
+                                      &memory_properties);
+
+  for (u32 i = 0; i < memory_properties.memoryTypeCount; ++i) {
+    if (type_filter & (1 << i) &&
+        (memory_properties.memoryTypes[i].propertyFlags & property_flags) ==
+            property_flags) {
+      return i;
+    }
+  }
+
+  return -1;
 }

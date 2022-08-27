@@ -85,9 +85,9 @@ bool vulkan_device_create(vulkan_context *context) {
 
   const char *extension_names[2];
   extension_names[0] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
-  extension_names[0] = "VK_KHR_portability_subset";
+  extension_names[1] = "VK_KHR_portability_subset";
   // { VK_KHR_SWAPCHAIN_EXTENSION_NAME, &"VK_KHR_portability_subset" }
-  device_create_info.enabledExtensionCount = 1;
+  device_create_info.enabledExtensionCount = 2;
   device_create_info.ppEnabledExtensionNames = extension_names;
 
   device_create_info.enabledLayerCount = 0;
@@ -186,6 +186,29 @@ void vulkan_device_query_swapchain_support(
         physical_device, surface, &out_support_info->present_mode_count,
         out_support_info->present_modes));
   }
+}
+
+bool vulkan_device_detect_depth_format(vulkan_device *device) {
+  const u64 candidate_count = 3;
+  VkFormat candidates[candidate_count] = {VK_FORMAT_D32_SFLOAT,
+                                          VK_FORMAT_D32_SFLOAT_S8_UINT,
+                                          VK_FORMAT_D24_UNORM_S8_UINT};
+
+  u32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  for (u64 i = 0; i < candidate_count; ++i) {
+    VkFormatProperties properties;
+    vkGetPhysicalDeviceFormatProperties(device->physical_device, candidates[i],
+                                        &properties);
+
+    if ((properties.linearTilingFeatures & flags) == flags) {
+      device->depth_format = candidates[i];
+      return true;
+    } else if ((properties.optimalTilingFeatures & flags) == flags) {
+      device->depth_format = candidates[i];
+      return true;
+    }
+  }
+  return false;
 }
 
 bool select_physical_device(vulkan_context *context) {
