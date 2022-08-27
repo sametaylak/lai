@@ -1,4 +1,5 @@
 #include "renderer/vulkan/vulkan_backend.h"
+#include "renderer/vulkan/vulkan_device.h"
 #include "renderer/vulkan/vulkan_platform.h"
 #include "renderer/vulkan/vulkan_types.inl"
 
@@ -120,6 +121,17 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
   LAI_LOG_DEBUG("Vulkan debugger created!");
 #endif
 
+  LAI_LOG_DEBUG("Creating vulkan surface");
+  if (!platform_create_vulkan_surface(plat_state, &context)) {
+    LAI_LOG_FATAL("Failed to create vulkan surface!");
+    return false;
+  }
+
+  if (!vulkan_device_create(&context)) {
+    LAI_LOG_FATAL("Failed to create vulkan device!");
+    return false;
+  }
+
   return true;
 }
 
@@ -131,6 +143,9 @@ void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
             context.instance, "vkDestroyDebugUtilsMessengerEXT");
     func(context.instance, context.debug_messenger, context.allocator);
   }
+
+  LAI_LOG_DEBUG("Destroying vulkan surface");
+  vkDestroySurfaceKHR(context.instance, context.surface, context.allocator);
 
   LAI_LOG_DEBUG("Destroying vulkan instance");
   vkDestroyInstance(context.instance, context.allocator);
