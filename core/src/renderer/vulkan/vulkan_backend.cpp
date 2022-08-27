@@ -33,7 +33,7 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
   VkInstanceCreateInfo create_info = {};
   create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   create_info.pApplicationInfo = &app_info;
-  create_info.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+  create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
   const char **required_extensions = darray_create(const char *);
   darray_push(required_extensions,
@@ -143,6 +143,8 @@ void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
             context.instance, "vkDestroyDebugUtilsMessengerEXT");
     func(context.instance, context.debug_messenger, context.allocator);
   }
+
+  vulkan_device_destroy(&context);
 
   LAI_LOG_DEBUG("Destroying vulkan surface");
   vkDestroySurfaceKHR(context.instance, context.surface, context.allocator);

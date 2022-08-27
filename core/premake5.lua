@@ -21,7 +21,12 @@ project "core"
 	}
 
 	filter "system:macosx"
-		defines "LAI_PLATFORM_MACOSX"
+		defines
+		{
+			"LAI_PLATFORM_MACOSX",
+			"VK_ENABLE_BETA_EXTENSIONS",
+		}
+
 		libdirs
 		{
 			"%{LibraryDir.VulkanSDK}",

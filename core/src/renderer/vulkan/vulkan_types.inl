@@ -2,6 +2,7 @@
 
 #include "base/asserts.h"
 #include "defines.h"
+
 #include <vulkan/vulkan.h>
 
 #define VK_CHECK(expression)                                                   \
@@ -23,6 +24,10 @@ struct vulkan_device {
   i32 graphics_queue_index;
   i32 present_queue_index;
   i32 transfer_queue_index;
+
+  VkQueue graphics_queue;
+  VkQueue present_queue;
+  VkQueue transfer_queue;
 
   VkPhysicalDeviceProperties properties;
   VkPhysicalDeviceFeatures features;
