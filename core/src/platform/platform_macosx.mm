@@ -4,6 +4,7 @@
 #include "renderer/vulkan/vulkan_platform.h"
 #include "containers/darray.h"
 #include "base/log.h"
+#include "base/event.h"
 #include "base/input.h"
 
 #ifdef LAI_PLATFORM_MACOSX
@@ -64,8 +65,8 @@ keys translate_keycode(u32 ns_keycode);
 - (BOOL)windowShouldClose:(id)sender {
     state->quit_flagged = true;
 
-    // event_context data = {};
-    // event_fire(EVENT_CODE_APPLICATION_QUIT, 0, data);
+    event_context data = {};
+    event_fire(EVENT_CODE_APPLICATION_QUIT, 0, data);
 
     // We close on platform shutdown
     return FALSE;
