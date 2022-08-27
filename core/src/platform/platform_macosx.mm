@@ -1,7 +1,10 @@
 // clang-format Language: Cpp
 
 #include "platform/platform.h"
+#include "renderer/vulkan/vulkan_platform.h"
+#include "containers/darray.h"
 #include "base/log.h"
+#include "base/event.h"
 #include "base/input.h"
 
 #ifdef LAI_PLATFORM_MACOSX
@@ -17,6 +20,11 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 
+// For surface creation
+#define VK_USE_PLATFORM_METAL_EXT
+#include <vulkan/vulkan.h>
+#include "renderer/vulkan/vulkan_types.inl"
+
 @class ApplicationDelegate;
 @class WindowDelegate;
 @class ContentView;
@@ -27,6 +35,7 @@ struct internal_state {
   NSWindow* window;
   ContentView* view;
   CAMetalLayer* layer;
+  VkSurfaceKHR surface;
   bool quit_flagged;
 };
 
@@ -56,25 +65,38 @@ keys translate_keycode(u32 ns_keycode);
 - (BOOL)windowShouldClose:(id)sender {
     state->quit_flagged = true;
 
-    // event_context data = {};
-    // event_fire(EVENT_CODE_APPLICATION_QUIT, 0, data);
+    event_context data = {};
+    event_fire(EVENT_CODE_APPLICATION_QUIT, 0, data);
 
     // We close on platform shutdown
     return FALSE;
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
-    // TODO: handle resize
+    event_context context;
+    const NSRect contentRect = [state->view frame];
+    const NSRect framebufferRect = [state->view convertRectToBacking:contentRect];
+    context.data.u16[0] = (u16)framebufferRect.size.width;
+    context.data.u16[1] = (u16)framebufferRect.size.height;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
 }
 
 - (void)windowDidMiniaturize:(NSNotification *)notification {
-    // TODO: handle minimize
+    event_context context;
+    context.data.u16[0] = 0;
+    context.data.u16[1] = 0;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
 
     [state->window miniaturize:nil];
 }
 
 - (void)windowDidDeminiaturize:(NSNotification *)notification {
-    // TODO: handle de-minimize
+    event_context context;
+    const NSRect contentRect = [state->view frame];
+    const NSRect framebufferRect = [state->view convertRectToBacking:contentRect];
+    context.data.u16[0] = (u16)framebufferRect.size.width;
+    context.data.u16[1] = (u16)framebufferRect.size.height;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
 
     [state->window deminiaturize:nil];
 }
@@ -282,6 +304,15 @@ bool platform_startup(platform_state* plat_state, const char* name, i32 x, i32 y
     [state->window setAcceptsMouseMovedEvents:YES];
     [state->window setRestorable:NO];
 
+    // send first resize event
+    event_context context;
+    const NSRect contentRect = [state->view frame];
+    const NSRect framebufferRect = [state->view convertRectToBacking:contentRect];
+    LAI_LOG_INFO("%i", (u16)framebufferRect.size.width);
+    context.data.u16[0] = (u16)framebufferRect.size.width;
+    context.data.u16[1] = (u16)framebufferRect.size.height;
+    event_fire(EVENT_CODE_RESIZED, 0, context);
+
     if (![[NSRunningApplication currentApplication] isFinishedLaunching])
         [NSApp run];
 
@@ -388,6 +419,34 @@ void platform_sleep(u64 milliseconds) {
     }
     usleep((milliseconds % 1000) * 1000);
 #endif
+}
+
+bool platform_create_vulkan_surface(struct platform_state *plat_state, struct vulkan_context *context) {
+  internal_state *state = (internal_state *)plat_state->internal_state;
+
+  VkMetalSurfaceCreateInfoEXT create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+  create_info.pLayer = state->layer;
+
+  VkResult result = vkCreateMetalSurfaceEXT(
+    context->instance, 
+    &create_info,
+    context->allocator,
+    &state->surface);
+
+  if (result != VK_SUCCESS) {
+      LAI_LOG_FATAL("Vulkan surface creation failed.");
+      return false;
+  }
+
+  context->surface = state->surface;
+  return true;
+}
+
+void platform_get_required_extension_names(const char ***names_darray) {
+  darray_push(*names_darray, "VK_EXT_metal_surface");
+  darray_push(*names_darray, "VK_KHR_get_physical_device_properties2");
+  darray_push(*names_darray, "VK_KHR_portability_enumeration");
 }
 
 keys translate_keycode(u32 ns_keycode) { 

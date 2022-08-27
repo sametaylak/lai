@@ -1,4 +1,6 @@
 # Build generation
+compile_commands.json
+.cache/
 build/
 Makefile
 

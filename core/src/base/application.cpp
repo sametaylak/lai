@@ -7,6 +7,8 @@
 #include "game_types.h"
 #include "platform/platform.h"
 
+#include "renderer/renderer_frontend.h"
+
 #include <cstdlib>
 
 struct application_state {
@@ -27,6 +29,8 @@ bool application_on_event(u16 code, void *sender, void *listener,
                           event_context context);
 bool application_on_key(u16 code, void *sender, void *listener,
                         event_context context);
+bool application_on_resized(u16 code, void *sender, void *listener,
+                            event_context context);
 
 bool application_create(game *game_inst) {
   if (initialized) {
@@ -40,14 +44,6 @@ bool application_create(game *game_inst) {
   initialize_logging();
   input_initialize();
 
-  // TODO: remove
-  LAI_LOG_FATAL("A test message: %f", 3.14f);
-  LAI_LOG_ERROR("A test message: %f", 3.14f);
-  LAI_LOG_WARN("A test message: %f", 3.14f);
-  LAI_LOG_INFO("A test message: %f", 3.14f);
-  LAI_LOG_DEBUG("A test message: %f", 3.14f);
-  LAI_LOG_TRACE("A test message: %f", 3.14f);
-
   app_state.is_running = true;
   app_state.is_suspended = false;
 
@@ -57,6 +53,7 @@ bool application_create(game *game_inst) {
   }
 
   event_register(EVENT_CODE_APPLICATION_QUIT, 0, application_on_event);
+  event_register(EVENT_CODE_RESIZED, 0, application_on_resized);
   event_register(EVENT_CODE_KEY_PRESSED, 0, application_on_key);
   event_register(EVENT_CODE_KEY_RELEASED, 0, application_on_key);
 
@@ -65,6 +62,11 @@ bool application_create(game *game_inst) {
                         game_inst->app_config.start_pos_y,
                         game_inst->app_config.start_width,
                         game_inst->app_config.start_height)) {
+    return false;
+  }
+
+  if (!renderer_initialize(game_inst->app_config.name, &app_state.platform)) {
+    LAI_LOG_FATAL("Failed to initialize renderer. Shutting down!");
     return false;
   }
 
@@ -115,6 +117,10 @@ bool application_run() {
         break;
       }
 
+      render_packet packet;
+      packet.delta_time = delta;
+      renderer_draw_frame(&packet);
+
       f64 frame_end_time = platform_get_absolute_time();
       f64 frame_elapsed_time = frame_end_time - frame_start_time;
       running_time += frame_elapsed_time;
@@ -139,15 +145,22 @@ bool application_run() {
   app_state.is_running = false;
 
   event_unregister(EVENT_CODE_APPLICATION_QUIT, 0, application_on_event);
+  event_unregister(EVENT_CODE_RESIZED, 0, application_on_resized);
   event_unregister(EVENT_CODE_KEY_PRESSED, 0, application_on_key);
   event_unregister(EVENT_CODE_KEY_RELEASED, 0, application_on_key);
 
   event_shutdown();
   input_shutdown();
+  renderer_shutdown();
 
   platform_shutdown(&app_state.platform);
 
   return true;
+}
+
+void application_get_framebuffer_size(u32 *width, u32 *height) {
+  *width = app_state.width;
+  *height = app_state.height;
 }
 
 bool application_on_event(u16 code, void *sender, void *listener,
@@ -176,6 +189,35 @@ bool application_on_key(u16 code, void *sender, void *listener,
   } else if (code == EVENT_CODE_KEY_RELEASED) {
     u16 key_code = context.data.u16[0];
     LAI_LOG_DEBUG("'%c' key released", key_code);
+  }
+  return false;
+}
+
+bool application_on_resized(u16 code, void *sender, void *listener,
+                            event_context context) {
+  if (code == EVENT_CODE_RESIZED) {
+    u16 width = context.data.u16[0];
+    u16 height = context.data.u16[1];
+
+    if (width != app_state.width || height != app_state.height) {
+      app_state.width = width;
+      app_state.height = height;
+
+      LAI_LOG_DEBUG("Window resize, %i, %i", width, height);
+
+      if (width == 0 || height == 0) {
+        LAI_LOG_INFO("Window minimized, suspending app");
+        app_state.is_suspended = true;
+        return true;
+      } else {
+        if (app_state.is_suspended) {
+          LAI_LOG_INFO("Window restored, resuming app");
+          app_state.is_suspended = false;
+        }
+        app_state.game_inst->on_resize(app_state.game_inst, width, height);
+        renderer_on_resized(width, height);
+      }
+    }
   }
   return false;
 }

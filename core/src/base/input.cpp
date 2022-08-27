@@ -27,7 +27,7 @@ void input_initialize() {
   lai_zero_memory(&state, sizeof(input_state));
   initialized = true;
 
-  LAI_LOG_INFO("Input system initialized");
+  LAI_LOG_INFO("Input system initialized!");
 }
 
 void input_shutdown() { initialized = false; }
@@ -143,7 +143,7 @@ void input_process_button(buttons button, bool pressed) {
 
 void input_process_mouse_move(i16 x, i16 y) {
   if (state.mouse_current.x != x || state.mouse_current.y != y) {
-    LAI_LOG_DEBUG("Mouse pos: %i, %i", x, y);
+    // LAI_LOG_DEBUG("Mouse pos: %i, %i", x, y);
     state.mouse_current.x = x;
     state.mouse_current.y = y;
 
