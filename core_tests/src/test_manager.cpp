@@ -1,6 +1,5 @@
 #include "test_manager.h"
 
-#include <base/clock.h>
 #include <base/lai_string.h>
 #include <base/log.h>
 #include <containers/darray.h>
@@ -29,14 +28,8 @@ void test_manager_run_tests() {
 
   u32 count = darray_length(tests);
 
-  clock total_time;
-  clock_start(&total_time);
-
   for (u32 i = 0; i < count; ++i) {
-    clock test_time;
-    clock_start(&test_time);
     u8 result = tests[i].func();
-    clock_update(&test_time);
 
     if (result == true) {
       ++passed;
@@ -49,13 +42,8 @@ void test_manager_run_tests() {
     }
     char status[20];
     string_format(status, failed ? "*** %d FAILED ***" : "SUCCESS", failed);
-    clock_update(&total_time);
-    LAI_LOG_INFO(
-        "Executed %d of %d (skipped %d) %s (%.6f sec / %.6f sec total)", i + 1,
-        count, skipped, status, test_time.elapsed, total_time.elapsed);
+    LAI_LOG_INFO("Executed %d of %d", i + 1, count, skipped, status);
   }
-
-  clock_stop(&total_time);
 
   LAI_LOG_INFO("Results: %d passed, %d failed, %d skipped.", passed, failed,
                skipped);
