@@ -78,8 +78,6 @@ void create(vulkan_context *context, u32 width, u32 height,
   swapchain_extent.width = width;
   swapchain_extent.height = height;
 
-  swapchain->max_frames_in_flight = 2;
-
   bool found = false;
   for (u32 i = 0; i < context->device.swapchain_support.format_count; ++i) {
     VkSurfaceFormatKHR format = context->device.swapchain_support.formats[i];
@@ -132,6 +130,8 @@ void create(vulkan_context *context, u32 width, u32 height,
           context->device.swapchain_support.capabilities.maxImageCount) {
     image_count = context->device.swapchain_support.capabilities.maxImageCount;
   }
+
+  swapchain->max_frames_in_flight = image_count - 1;
 
   VkSwapchainCreateInfoKHR swapchain_create_info = {};
   swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;

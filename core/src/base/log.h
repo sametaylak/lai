@@ -22,8 +22,8 @@ enum log_level {
   LOG_LEVEL_TRACE = 5
 };
 
-bool initialize_logging();
-void shutdown_logging();
+bool initialize_logging(u64 *memory_requirement, void *state);
+void shutdown_logging(void *state);
 
 void log_output(log_level level, const char *message, ...);
 

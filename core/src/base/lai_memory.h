@@ -5,6 +5,7 @@
 enum memory_tag {
   MEMORY_TAG_UNKNOWN,
   MEMORY_TAG_ARRAY,
+  MEMORY_TAG_LINEAR_ALLOCATOR,
   MEMORY_TAG_DARRAY,
   MEMORY_TAG_DICT,
   MEMORY_TAG_RING_QUEUE,
@@ -23,8 +24,8 @@ enum memory_tag {
   MEMORY_TAG_MAX_TAGS,
 };
 
-void initialize_memory();
-void shutdown_memory();
+bool initialize_memory(u64 *memory_requirement, void *state);
+void shutdown_memory(void *state);
 
 void *lai_allocate(u64 size, memory_tag tag);
 void lai_free(void *block, u64 size, memory_tag tag);
@@ -33,3 +34,5 @@ void *lai_copy_memory(void *destination, const void *source, u64 size);
 void *lai_set_memory(void *destination, i32 value, u64 size);
 
 char *get_memory_usage();
+
+u64 get_memory_alloc_count();

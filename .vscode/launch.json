@@ -22,6 +22,17 @@
       },
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}"
-    }
+    },
+    {
+      "name": "Launch Core Tests",
+      "type": "cppdbg",
+      "request": "launch",
+      "stopAtEntry": false,
+      "osx": {
+        "program": "${workspaceFolder}/build/bin/Debug-macosx-x86_64/core_tests/core_tests",
+        "MIMode": "lldb",
+      },
+      "cwd": "${workspaceFolder}"
+    },
   ]
 }

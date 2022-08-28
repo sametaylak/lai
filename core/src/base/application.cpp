@@ -5,6 +5,7 @@
 #include "base/lai_memory.h"
 #include "base/log.h"
 #include "game_types.h"
+#include "memory/linear_allocator.h"
 #include "platform/platform.h"
 
 #include "renderer/renderer_frontend.h"
@@ -20,10 +21,16 @@ struct application_state {
   i16 height;
   clock clock;
   f64 last_time;
+  linear_allocator systems_allocator;
+
+  u64 log_system_memory_requirement;
+  void *log_system_state;
+
+  u64 memory_system_memory_requirement;
+  void *memory_system_state;
 };
 
-static bool initialized = false;
-static application_state app_state;
+static application_state *app_state;
 
 bool application_on_event(u16 code, void *sender, void *listener,
                           event_context context);
@@ -33,19 +40,46 @@ bool application_on_resized(u16 code, void *sender, void *listener,
                             event_context context);
 
 bool application_create(game *game_inst) {
-  if (initialized) {
+  if (game_inst->application_state) {
     LAI_LOG_ERROR("application_create called more than once");
     return false;
   }
 
-  app_state.game_inst = game_inst;
+  game_inst->application_state =
+      lai_allocate(sizeof(application_state), MEMORY_TAG_APPLICATION);
+  app_state = (application_state *)game_inst->application_state;
+  app_state->width = game_inst->app_config.start_width;
+  app_state->height = game_inst->app_config.start_height;
+  app_state->game_inst = game_inst;
+  app_state->is_running = false;
+  app_state->is_suspended = false;
 
-  // Initialize subsystem
-  initialize_logging();
+  u64 systems_allocator_total_size = 64 * 1024 * 1024; // 64mb
+  linear_allocator_create(systems_allocator_total_size, nullptr,
+                          &app_state->systems_allocator);
+
+  // Initialize Memory State
+  initialize_memory(&app_state->memory_system_memory_requirement, nullptr);
+  app_state->memory_system_state =
+      linear_allocator_allocate(&app_state->systems_allocator,
+                                app_state->memory_system_memory_requirement);
+  if (!initialize_memory(&app_state->memory_system_memory_requirement,
+                         app_state->memory_system_state)) {
+    LAI_LOG_FATAL("Memory system failed to initialize!");
+    return false;
+  }
+
+  // Initialize Log State
+  initialize_logging(&app_state->log_system_memory_requirement, nullptr);
+  app_state->log_system_state = linear_allocator_allocate(
+      &app_state->systems_allocator, app_state->log_system_memory_requirement);
+  if (!initialize_logging(&app_state->log_system_memory_requirement,
+                          app_state->log_system_state)) {
+    LAI_LOG_FATAL("Log system failed to initialize!");
+    return false;
+  }
+
   input_initialize();
-
-  app_state.is_running = true;
-  app_state.is_suspended = false;
 
   if (!event_initialize()) {
     LAI_LOG_FATAL("Event system failed to initialize!");
@@ -57,7 +91,7 @@ bool application_create(game *game_inst) {
   event_register(EVENT_CODE_KEY_PRESSED, 0, application_on_key);
   event_register(EVENT_CODE_KEY_RELEASED, 0, application_on_key);
 
-  if (!platform_startup(&app_state.platform, game_inst->app_config.name,
+  if (!platform_startup(&app_state->platform, game_inst->app_config.name,
                         game_inst->app_config.start_pos_x,
                         game_inst->app_config.start_pos_y,
                         game_inst->app_config.start_width,
@@ -65,28 +99,25 @@ bool application_create(game *game_inst) {
     return false;
   }
 
-  if (!renderer_initialize(game_inst->app_config.name, &app_state.platform)) {
+  if (!renderer_initialize(game_inst->app_config.name, &app_state->platform)) {
     LAI_LOG_FATAL("Failed to initialize renderer. Shutting down!");
     return false;
   }
 
-  if (!app_state.game_inst->initialize(app_state.game_inst)) {
+  if (!app_state->game_inst->initialize(app_state->game_inst)) {
     LAI_LOG_FATAL("Game failed to initialize!");
     return false;
   }
-
-  app_state.game_inst->on_resize(app_state.game_inst, app_state.width,
-                                 app_state.height);
-
-  initialized = true;
 
   return true;
 }
 
 bool application_run() {
-  clock_start(&app_state.clock);
-  clock_update(&app_state.clock);
-  app_state.last_time = app_state.clock.elapsed;
+  app_state->is_running = true;
+
+  clock_start(&app_state->clock);
+  clock_update(&app_state->clock);
+  app_state->last_time = app_state->clock.elapsed;
 
   f64 running_time = 0;
   f64 target_fps = 1.0f / 60;
@@ -94,26 +125,26 @@ bool application_run() {
 
   LAI_LOG_INFO(get_memory_usage());
 
-  while (app_state.is_running) {
-    clock_update(&app_state.clock);
-    f64 current_time = app_state.clock.elapsed;
-    f64 delta = (current_time - app_state.last_time);
+  while (app_state->is_running) {
+    clock_update(&app_state->clock);
+    f64 current_time = app_state->clock.elapsed;
+    f64 delta = (current_time - app_state->last_time);
     f64 frame_start_time = platform_get_absolute_time();
 
-    if (!platform_pump_messages(&app_state.platform)) {
-      app_state.is_running = false;
+    if (!platform_pump_messages(&app_state->platform)) {
+      app_state->is_running = false;
     }
 
-    if (!app_state.is_suspended) {
-      if (!app_state.game_inst->update(app_state.game_inst, (f32)delta)) {
+    if (!app_state->is_suspended) {
+      if (!app_state->game_inst->update(app_state->game_inst, (f32)delta)) {
         LAI_LOG_FATAL("Game update failed, shutting down!");
-        app_state.is_running = true;
+        app_state->is_running = true;
         break;
       }
 
-      if (!app_state.game_inst->render(app_state.game_inst, (f32)delta)) {
+      if (!app_state->game_inst->render(app_state->game_inst, (f32)delta)) {
         LAI_LOG_FATAL("Game render failed, shutting down!");
-        app_state.is_running = true;
+        app_state->is_running = true;
         break;
       }
 
@@ -138,11 +169,11 @@ bool application_run() {
 
       input_update(delta);
 
-      app_state.last_time = current_time;
+      app_state->last_time = current_time;
     }
   }
 
-  app_state.is_running = false;
+  app_state->is_running = false;
 
   event_unregister(EVENT_CODE_APPLICATION_QUIT, 0, application_on_event);
   event_unregister(EVENT_CODE_RESIZED, 0, application_on_resized);
@@ -152,15 +183,18 @@ bool application_run() {
   event_shutdown();
   input_shutdown();
   renderer_shutdown();
+  shutdown_logging(app_state->log_system_state);
 
-  platform_shutdown(&app_state.platform);
+  platform_shutdown(&app_state->platform);
+
+  shutdown_memory(app_state->memory_system_state);
 
   return true;
 }
 
 void application_get_framebuffer_size(u32 *width, u32 *height) {
-  *width = app_state.width;
-  *height = app_state.height;
+  *width = app_state->width;
+  *height = app_state->height;
 }
 
 bool application_on_event(u16 code, void *sender, void *listener,
@@ -168,7 +202,7 @@ bool application_on_event(u16 code, void *sender, void *listener,
   switch (code) {
   case EVENT_CODE_APPLICATION_QUIT: {
     LAI_LOG_INFO("EVENT_CODE_APPLICATION_QUIT received, shutting down");
-    app_state.is_running = false;
+    app_state->is_running = false;
     return true;
   }
   }
@@ -199,22 +233,22 @@ bool application_on_resized(u16 code, void *sender, void *listener,
     u16 width = context.data.u16[0];
     u16 height = context.data.u16[1];
 
-    if (width != app_state.width || height != app_state.height) {
-      app_state.width = width;
-      app_state.height = height;
+    if (width != app_state->width || height != app_state->height) {
+      app_state->width = width;
+      app_state->height = height;
 
       LAI_LOG_DEBUG("Window resize, %i, %i", width, height);
 
       if (width == 0 || height == 0) {
         LAI_LOG_INFO("Window minimized, suspending app");
-        app_state.is_suspended = true;
+        app_state->is_suspended = true;
         return true;
       } else {
-        if (app_state.is_suspended) {
+        if (app_state->is_suspended) {
           LAI_LOG_INFO("Window restored, resuming app");
-          app_state.is_suspended = false;
+          app_state->is_suspended = false;
         }
-        app_state.game_inst->on_resize(app_state.game_inst, width, height);
+        app_state->game_inst->on_resize(app_state->game_inst, width, height);
         renderer_on_resized(width, height);
       }
     }

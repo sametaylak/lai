@@ -5,6 +5,7 @@
 struct game {
   application_config app_config;
   void *state;
+  void *application_state;
   bool (*initialize)(struct game *game_inst);
   bool (*update)(struct game *game_inst, f32 delta_time);
   bool (*render)(struct game *game_inst, f32 delta_time);
