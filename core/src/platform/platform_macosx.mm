@@ -392,13 +392,13 @@ void* platform_set_memory(void *destination, i32 value, u64 size) {
 void platform_console_write(const char *message, u8 color) {
     // FATAL,ERROR,WARN,INFO,DEBUG,TRACE
     const char* color_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
-    printf("\033[%sm%s\033[0m\n", color_strings[color], message);
+    printf("\033[%sm%s\033[0m", color_strings[color], message);
 }
 
 void platform_console_write_error(const char *message, u8 color) {
     // FATAL,ERROR,WARN,INFO,DEBUG,TRACE
     const char* color_strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
-    printf("\033[%sm%s\033[0m\n", color_strings[color], message);
+    printf("\033[%sm%s\033[0m", color_strings[color], message);
 }
 
 f64 platform_get_absolute_time() {

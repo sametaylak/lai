@@ -9,6 +9,8 @@
 #include "renderer/vulkan/vulkan_types.inl"
 #include "renderer/vulkan/vulkan_utils.h"
 
+#include "renderer/vulkan/shaders/vulkan_object_shader.h"
+
 #include "base/application.h"
 
 #include "base/lai_string.h"
@@ -201,12 +203,19 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
     context.images_in_flight[i] = nullptr;
   }
 
+  if (!vulkan_object_shader_create(&context, &context.object_shader)) {
+    LAI_LOG_FATAL("Eror loading built-in basic_lighting shader");
+    return false;
+  }
+
   LAI_LOG_INFO("Vulkan renderer created!");
   return true;
 }
 
 void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
   vkDeviceWaitIdle(context.device.logical_device);
+
+  vulkan_object_shader_destroy(&context, &context.object_shader);
 
   for (u8 i = 0; i < context.swapchain.max_frames_in_flight; ++i) {
     if (context.image_available_semaphores[i]) {
@@ -269,6 +278,7 @@ void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
     context.surface = nullptr;
   }
 
+#ifdef LAI_DEBUG
   LAI_LOG_DEBUG("Destroying vulkan debugger");
   if (context.debug_messenger) {
     PFN_vkDestroyDebugUtilsMessengerEXT func =
@@ -279,6 +289,7 @@ void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
 
   LAI_LOG_DEBUG("Destroying vulkan instance");
   vkDestroyInstance(context.instance, context.allocator);
+#endif
 }
 
 void vulkan_renderer_backend_on_resized(renderer_backend *backend, u16 width,

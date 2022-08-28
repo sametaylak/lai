@@ -24,10 +24,10 @@ project "core"
   	buildoptions { "-Werror=vla" }
 
 	filter "system:macosx"
-		-- postbuildcommands {
-		-- 	"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.vert.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.vert.spv",
-		-- 	"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.frag.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.frag.spv",
-		-- }
+		postbuildcommands {
+			"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/Builtin.ObjectShader.vert -o %{wks.location}/assets/shaders/Builtin.ObjectShader.vert.spv",
+			"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/Builtin.ObjectShader.frag -o %{wks.location}/assets/shaders/Builtin.ObjectShader.frag.spv",
+		}
 
 		defines
 		{
