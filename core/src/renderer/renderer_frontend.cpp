@@ -3,17 +3,26 @@
 #include "base/log.h"
 #include "renderer/renderer_backend.h"
 
-static renderer_backend *backend;
+struct renderer_system_state {
+  renderer_backend *backend;
+};
+static renderer_system_state *state_ptr;
 
-bool renderer_initialize(const char *application_name,
-                         struct platform_state *plat_state) {
-  backend = (renderer_backend *)lai_allocate(sizeof(renderer_backend),
-                                             MEMORY_TAG_RENDERER);
+bool renderer_initialize(u64 *memory_requirement, void *state,
+                         const char *application_name) {
 
-  renderer_backend_create(RENDERER_BACKEND_TYPE_VULKAN, plat_state, backend);
-  backend->frame_number = 0;
+  *memory_requirement = sizeof(renderer_system_state);
+  if (state == nullptr) {
+    return false;
+  }
 
-  if (!backend->initialize(backend, application_name, plat_state)) {
+  state_ptr = (renderer_system_state *)state;
+  state_ptr->backend = (renderer_backend *)lai_allocate(
+      sizeof(renderer_backend), MEMORY_TAG_RENDERER);
+  renderer_backend_create(RENDERER_BACKEND_TYPE_VULKAN, state_ptr->backend);
+  state_ptr->backend->frame_number = 0;
+
+  if (!state_ptr->backend->initialize(state_ptr->backend, application_name)) {
     LAI_LOG_FATAL("Renderer backend failed, shutting down!");
     return false;
   }
@@ -21,26 +30,30 @@ bool renderer_initialize(const char *application_name,
   return true;
 }
 
-void renderer_shutdown() {
-  backend->shutdown(backend);
-  lai_free(backend, sizeof(renderer_backend), MEMORY_TAG_RENDERER);
+void renderer_shutdown(void *state) {
+  if (state_ptr) {
+    state_ptr->backend->shutdown(state_ptr->backend);
+    lai_free(state_ptr->backend, sizeof(renderer_backend), MEMORY_TAG_RENDERER);
+
+    state_ptr = nullptr;
+  }
 }
 
 void renderer_on_resized(u16 width, u16 height) {
-  if (backend) {
-    backend->resized(backend, width, height);
+  if (state_ptr->backend) {
+    state_ptr->backend->resized(state_ptr->backend, width, height);
   } else {
     LAI_LOG_WARN("Renderer backend does not exist to accept resize");
   }
 }
 
 bool renderer_begin_frame(f32 delta_time) {
-  return backend->begin_frame(backend, delta_time);
+  return state_ptr->backend->begin_frame(state_ptr->backend, delta_time);
 }
 
 bool renderer_end_frame(f32 delta_time) {
-  bool result = backend->end_frame(backend, delta_time);
-  backend->frame_number++;
+  bool result = state_ptr->backend->end_frame(state_ptr->backend, delta_time);
+  state_ptr->backend->frame_number++;
   return result;
 }
 

@@ -36,8 +36,7 @@ void regenerate_framebuffers(renderer_backend *backend,
 bool recreate_swapchain(renderer_backend *backend);
 
 bool vulkan_renderer_backend_initialize(renderer_backend *backend,
-                                        const char *application_name,
-                                        struct platform_state *plat_state) {
+                                        const char *application_name) {
   context.find_memory_index = find_memory_index;
   context.allocator = nullptr;
 
@@ -150,7 +149,7 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
 #endif
 
   LAI_LOG_DEBUG("Creating vulkan surface");
-  if (!platform_create_vulkan_surface(plat_state, &context)) {
+  if (!platform_create_vulkan_surface(&context)) {
     LAI_LOG_FATAL("Failed to create vulkan surface!");
     return false;
   }

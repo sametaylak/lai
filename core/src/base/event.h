@@ -25,8 +25,8 @@ struct event_context {
 typedef bool (*PFN_on_event)(u16 code, void *sender, void *listener_instance,
                              event_context data);
 
-bool event_initialize();
-void event_shutdown();
+bool event_initialize(u64 *memory_requirement, void *state);
+void event_shutdown(void *state);
 
 bool event_register(u16 code, void *listener, PFN_on_event on_event);
 bool event_unregister(u16 code, void *listener, PFN_on_event on_event);

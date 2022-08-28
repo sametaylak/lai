@@ -2,14 +2,10 @@
 
 #include "defines.h"
 
-struct platform_state {
-  void *internal_state;
-};
-
-bool platform_startup(platform_state *plat_state, const char *name, i32 x,
-                      i32 y, i32 width, i32 height);
-bool platform_pump_messages(platform_state *plat_state);
-void platform_shutdown(platform_state *plat_state);
+bool platform_startup(u64 *memory_requirement, void *state, const char *name,
+                      i32 x, i32 y, i32 width, i32 height);
+bool platform_pump_messages(void *state);
+void platform_shutdown(void *state);
 
 void *platform_allocate(u64 size, bool aligned);
 void platform_free(void *block, bool aligned);
