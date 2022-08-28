@@ -21,6 +21,11 @@ project "core"
 	}
 
 	filter "system:macosx"
+		postbuildcommands {
+			"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.vert.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.vert.spv",
+			"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.frag.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.frag.spv",
+		}
+
 		defines
 		{
 			"LAI_PLATFORM_MACOSX",
