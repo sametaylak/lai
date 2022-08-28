@@ -8,6 +8,16 @@
 #define VK_CHECK(expression)                                                   \
   { LAI_ASSERT(expression == VK_SUCCESS); }
 
+struct vulkan_buffer {
+  u64 total_size;
+  VkBuffer handle;
+  VkBufferUsageFlagBits usage;
+  bool is_locked;
+  VkDeviceMemory memory;
+  i32 memory_index;
+  u32 memory_property_flags;
+};
+
 struct vulkan_swapchain_support_info {
   VkSurfaceCapabilitiesKHR capabilities;
   u32 format_count;
@@ -141,6 +151,9 @@ struct vulkan_context {
   vulkan_swapchain swapchain;
   vulkan_renderpass main_renderpass;
 
+  vulkan_buffer object_vertex_buffer;
+  vulkan_buffer object_index_buffer;
+
   vulkan_command_buffer *graphics_command_buffers;
 
   VkSemaphore *image_available_semaphores;
@@ -156,6 +169,9 @@ struct vulkan_context {
   bool recreating_swapchain;
 
   vulkan_object_shader object_shader;
+
+  u64 geometry_vertex_offset;
+  u64 geometry_index_offset;
 
   i32 (*find_memory_index)(u32 type_filter, u32 property_flags);
 };

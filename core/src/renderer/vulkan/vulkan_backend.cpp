@@ -1,4 +1,5 @@
 #include "renderer/vulkan/vulkan_backend.h"
+#include "renderer/vulkan/vulkan_buffer.h"
 #include "renderer/vulkan/vulkan_command_buffer.h"
 #include "renderer/vulkan/vulkan_device.h"
 #include "renderer/vulkan/vulkan_fence.h"
@@ -11,8 +12,9 @@
 
 #include "renderer/vulkan/shaders/vulkan_object_shader.h"
 
-#include "base/application.h"
+#include "math/math_types.h"
 
+#include "base/application.h"
 #include "base/lai_string.h"
 #include "base/log.h"
 
@@ -30,6 +32,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     const VkDebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data);
 
 i32 find_memory_index(u32 type_filter, u32 property_flags);
+
+bool create_buffers(vulkan_context *context);
 
 void create_command_buffers(renderer_backend *backend);
 void regenerate_framebuffers(renderer_backend *backend,
@@ -204,7 +208,12 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
   }
 
   if (!vulkan_object_shader_create(&context, &context.object_shader)) {
-    LAI_LOG_FATAL("Eror loading built-in basic_lighting shader");
+    LAI_LOG_FATAL("Error loading built-in basic_lighting shader");
+    return false;
+  }
+
+  if (!create_buffers(&context)) {
+    LAI_LOG_FATAL("Could not create buffers");
     return false;
   }
 
@@ -214,6 +223,9 @@ bool vulkan_renderer_backend_initialize(renderer_backend *backend,
 
 void vulkan_renderer_backend_shutdown(renderer_backend *backend) {
   vkDeviceWaitIdle(context.device.logical_device);
+
+  vulkan_buffer_destroy(&context, &context.object_vertex_buffer);
+  vulkan_buffer_destroy(&context, &context.object_index_buffer);
 
   vulkan_object_shader_destroy(&context, &context.object_shader);
 
@@ -589,6 +601,39 @@ bool recreate_swapchain(renderer_backend *backend) {
   create_command_buffers(backend);
 
   context.recreating_swapchain = false;
+
+  return true;
+}
+
+bool create_buffers(vulkan_context *context) {
+  VkMemoryPropertyFlagBits memory_property_flags =
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+  VkBufferUsageFlagBits vertex_buffer_usage_bits =
+      (VkBufferUsageFlagBits)(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                              VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+  const u64 vertex_buffer_size = sizeof(vertex_3d) * 1024 * 1024;
+  if (!vulkan_buffer_create(context, vertex_buffer_size,
+                            vertex_buffer_usage_bits, memory_property_flags,
+                            true, &context->object_vertex_buffer)) {
+    LAI_LOG_ERROR("Error creating vertex buffer");
+    return false;
+  }
+  context->geometry_vertex_offset = 0;
+
+  VkBufferUsageFlagBits index_buffer_usage_bits =
+      (VkBufferUsageFlagBits)(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                              VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+  const u64 index_buffer_size = sizeof(vertex_3d) * 1024 * 1024;
+  if (!vulkan_buffer_create(context, index_buffer_size, index_buffer_usage_bits,
+                            memory_property_flags, true,
+                            &context->object_index_buffer)) {
+    LAI_LOG_ERROR("Error creating index buffer");
+    return false;
+  }
+  context->geometry_index_offset = 0;
 
   return true;
 }
