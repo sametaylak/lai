@@ -13,13 +13,27 @@ void report_assertion_failure(const char *expression, const char *message,
              expression, message, file, line);
 }
 
-bool initialize_logging() {
+struct log_system_state {
+  bool initialized;
+};
+static log_system_state *state_ptr;
+
+bool initialize_logging(u64 *memory_requirement, void *state) {
+  *memory_requirement = sizeof(log_system_state);
+  if (state == nullptr) {
+    return false;
+  }
+
+  state_ptr = (log_system_state *)state;
+  state_ptr->initialized = true;
+
   // TODO: create .log file
   return true;
 }
 
-void shutdown_logging() {
+void shutdown_logging(void *state) {
   // TODO: clean queued entries
+  state_ptr = nullptr;
 }
 
 void log_output(log_level level, const char *message, ...) {

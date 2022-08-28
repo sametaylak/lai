@@ -11,17 +11,33 @@ struct memory_stats {
 };
 
 static const char *memory_tag_strings[MEMORY_TAG_MAX_TAGS] = {
-    "UNKNOWN     ", "ARRAY       ", "DARRAY      ", "DICT        ",
-    "RING_QUEUE  ", "BST         ", "STRING      ", "APPLICATION ",
-    "JOB         ", "TEXTURE     ", "MAT_INST    ", "RENDERER    ",
-    "GAME        ", "TRANSFORM   ", "ENTITY      ", "ENTITY_MODE ",
-    "SCENE       "};
+    "UNKNOWN     ", "ARRAY       ", "LINEAR_ALLC ", "DARRAY      ",
+    "DICT        ", "RING_QUEUE  ", "BST         ", "STRING      ",
+    "APPLICATION ", "JOB         ", "TEXTURE     ", "MAT_INST    ",
+    "RENDERER    ", "GAME        ", "TRANSFORM   ", "ENTITY      ",
+    "ENTITY_MODE ", "SCENE       "};
 
-static memory_stats stats;
+struct memory_system_state {
+  memory_stats stats;
+  u64 alloc_count;
+};
+static memory_system_state *state_ptr;
 
-void initialize_memory() { platform_zero_memory(&stats, sizeof(stats)); }
+bool initialize_memory(u64 *memory_requirement, void *state) {
+  *memory_requirement = sizeof(memory_system_state);
+  if (state == nullptr) {
+    return false;
+  }
 
-void shutdown_memory() {}
+  state_ptr = (memory_system_state *)state;
+  state_ptr->alloc_count = 0;
+  ;
+  platform_zero_memory(&state_ptr->stats, sizeof(state_ptr->stats));
+
+  return true;
+}
+
+void shutdown_memory(void *state) { state_ptr = nullptr; }
 
 void *lai_allocate(u64 size, memory_tag tag) {
   if (tag == MEMORY_TAG_UNKNOWN) {
@@ -29,8 +45,11 @@ void *lai_allocate(u64 size, memory_tag tag) {
                  "allocation.");
   }
 
-  stats.total_allocated += size;
-  stats.tagged_allocations[tag] += size;
+  if (state_ptr) {
+    state_ptr->stats.total_allocated += size;
+    state_ptr->stats.tagged_allocations[tag] += size;
+    state_ptr->alloc_count++;
+  }
 
   void *block = platform_allocate(size, false);
   platform_zero_memory(block, size);
@@ -43,8 +62,11 @@ void lai_free(void *block, u64 size, memory_tag tag) {
         "lai_free called using MEMORY_TAG_UNKNOWN. Re-class this allocation.");
   }
 
-  stats.total_allocated -= size;
-  stats.tagged_allocations[tag] -= size;
+  if (state_ptr) {
+    state_ptr->stats.total_allocated -= size;
+    state_ptr->stats.tagged_allocations[tag] -= size;
+    state_ptr->alloc_count--;
+  }
 
   platform_free(block, false);
 }
@@ -72,19 +94,19 @@ char *get_memory_usage() {
     char unit[4] = "XiB";
     float amount = 1.0f;
 
-    if (stats.tagged_allocations[i] >= gib) {
+    if (state_ptr->stats.tagged_allocations[i] >= gib) {
       unit[0] = 'G';
-      amount = stats.tagged_allocations[i] / (float)gib;
-    } else if (stats.tagged_allocations[i] >= mib) {
+      amount = state_ptr->stats.tagged_allocations[i] / (float)gib;
+    } else if (state_ptr->stats.tagged_allocations[i] >= mib) {
       unit[0] = 'M';
-      amount = stats.tagged_allocations[i] / (float)mib;
-    } else if (stats.tagged_allocations[i] >= kib) {
+      amount = state_ptr->stats.tagged_allocations[i] / (float)mib;
+    } else if (state_ptr->stats.tagged_allocations[i] >= kib) {
       unit[0] = 'K';
-      amount = stats.tagged_allocations[i] / (float)kib;
+      amount = state_ptr->stats.tagged_allocations[i] / (float)kib;
     } else {
       unit[0] = 'B';
       unit[1] = 0;
-      amount = (float)stats.tagged_allocations[i];
+      amount = (float)state_ptr->stats.tagged_allocations[i];
     }
 
     i32 length = snprintf(buffer + offset, 8000, "  %s: %.2f%s\n",
@@ -93,4 +115,11 @@ char *get_memory_usage() {
   }
   char *out_string = string_duplicate(buffer);
   return out_string;
+}
+
+u64 get_memory_alloc_count() {
+  if (state_ptr) {
+    return state_ptr->alloc_count;
+  }
+  return 0;
 }

@@ -8,8 +8,6 @@
 extern bool create_game(game *out_game);
 
 int main() {
-  initialize_memory();
-
   game game_inst;
   if (!create_game(&game_inst)) {
     LAI_LOG_FATAL("Could not create game!");
@@ -31,8 +29,5 @@ int main() {
     LAI_LOG_INFO("Application did not shutdown gracefully!");
     return 2;
   }
-
-  shutdown_memory();
-
   return 0;
 }

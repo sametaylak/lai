@@ -27,4 +27,5 @@ Library = {}
 Library["Vulkan_MacOSX"] = "%{LibraryDir.VulkanSDK}/vulkan.1"
 
 include "core"
+include "core_tests"
 include "sandbox"

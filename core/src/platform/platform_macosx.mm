@@ -193,6 +193,10 @@ keys translate_keycode(u32 ns_keycode);
   input_process_key(key, false);
 }
 
+- (void)flagsChanged:(NSEvent *)event {
+  // Handle modifier keys
+}
+
 - (void)scrollWheel:(NSEvent *)event {
   input_process_mouse_wheel((i8)[event scrollingDeltaY]);
 }
@@ -303,15 +307,6 @@ bool platform_startup(platform_state* plat_state, const char* name, i32 x, i32 y
     [state->window setDelegate:state->window_delegate];
     [state->window setAcceptsMouseMovedEvents:YES];
     [state->window setRestorable:NO];
-
-    // send first resize event
-    event_context context;
-    const NSRect contentRect = [state->view frame];
-    const NSRect framebufferRect = [state->view convertRectToBacking:contentRect];
-    LAI_LOG_INFO("%i", (u16)framebufferRect.size.width);
-    context.data.u16[0] = (u16)framebufferRect.size.width;
-    context.data.u16[1] = (u16)framebufferRect.size.height;
-    event_fire(EVENT_CODE_RESIZED, 0, context);
 
     if (![[NSRunningApplication currentApplication] isFinishedLaunching])
         [NSApp run];

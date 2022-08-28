@@ -20,11 +20,14 @@ project "core"
 		"%{IncludeDir.VulkanSDK}",
 	}
 
+	filter { "action:gmake2" }
+  	buildoptions { "-Werror=vla" }
+
 	filter "system:macosx"
-		postbuildcommands {
-			"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.vert.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.vert.spv",
-			"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.frag.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.frag.spv",
-		}
+		-- postbuildcommands {
+		-- 	"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.vert.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.vert.spv",
+		-- 	"%{wks.location}/bin/glslc/glslc_macosx %{wks.location}/assets/shaders/builtin_object_shader.frag.glsl -o %{wks.location}/assets/shaders/builtin_object_shader.frag.spv",
+		-- }
 
 		defines
 		{
